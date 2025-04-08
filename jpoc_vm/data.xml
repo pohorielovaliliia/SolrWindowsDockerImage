@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<add>
+<doc>
+<field name="id"><![CDATA[1]]></field>
+<field name="t_kuromoji"><![CDATA[下垂体機能異常]]></field>
+<field name="t_cjk"><![CDATA[下垂体機能異常]]></field>
+<field name="t_ms"><![CDATA[下垂体機能異常]]></field>
+</doc>
+<doc>
+<field name="id"><![CDATA[2]]></field>
+<field name="t_kuromoji"><![CDATA[下垂体]]></field>
+<field name="t_cjk"><![CDATA[下垂体]]></field>
+<field name="t_ms"><![CDATA[下垂体]]></field>
+</doc>
+<doc>
+<field name="id"><![CDATA[3]]></field>
+<field name="t_kuromoji"><![CDATA[成人成長ホルモン分泌不全症]]></field>
+<field name="t_cjk"><![CDATA[成人成長ホルモン分泌不全症]]></field>
+<field name="t_ms"><![CDATA[成人成長ホルモン分泌不全症]]></field>
+</doc>
+<doc>
+<field name="id"><![CDATA[4]]></field>
+<field name="t_kuromoji"><![CDATA[ホルモン]]></field>
+<field name="t_cjk"><![CDATA[ホルモン]]></field>
+<field name="t_ms"><![CDATA[ホルモン]]></field>
+</doc>
+<doc>
+<field name="id"><![CDATA[5]]></field>
+<field name="t_kuromoji"><![CDATA[きのう機能かすいたい下垂体いじょう異常]]></field>
+<field name="t_cjk"><![CDATA[きのう機能かすいたい下垂体いじょう異常]]></field>
+<field name="t_ms"><![CDATA[体モン]]></field>
+</doc>
+<doc>
+<field name="id"><![CDATA[10]]></field>
+<field name="t_kuromoji"><![CDATA[きのうは悪性腫瘍のリンパ節が転移した患者]]></field>
+<field name="t_cjk"><![CDATA[きのうは悪性腫瘍のリンパ節が転移した患者]]></field>
+<field name="t_ms"><![CDATA[体モン]]></field>
+</doc>
+<doc>
+<field name="id"><![CDATA[11]]></field>
+<field name="t_kuromoji"><![CDATA[きのうはがんのリンパ節が転移した患者]]></field>
+<field name="t_cjk"><![CDATA[きのうはがんのリンパ節が転移した患者]]></field>
+<field name="t_ms"><![CDATA[体モン]]></field>
+</doc>
+<doc>
+<field name="id"><![CDATA[12]]></field>
+<field name="t_kuromoji"><![CDATA[きのうはリンパ節が転移した患者]]></field>
+<field name="t_cjk"><![CDATA[きのうはリンパ節が転移した患者]]></field>
+<field name="t_ms"><![CDATA[体モン]]></field>
+</doc>
+</add>

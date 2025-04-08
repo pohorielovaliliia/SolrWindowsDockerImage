@@ -9,6 +9,10 @@ RUN Invoke-WebRequest -Method Get -Uri "http://dlcdn.apache.org/lucene/solr/8.11
 
 WORKDIR "/solr/solr-8.11.4"
 
+# Copy custom config files
+COPY extlib/ server/extlib
+COPY jpoc_vm/ server/solr/jpoc_vm
+
 EXPOSE 8983
 
 HEALTHCHECK CMD powershell -command \

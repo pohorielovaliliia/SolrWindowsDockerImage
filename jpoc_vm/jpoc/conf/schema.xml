@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<schema name="example" version="1.6">
+   <field name="_version_" type="plong" indexed="false" stored="false"/>
+   <field name="_root_" type="string" indexed="true" stored="false" docValues="false" />
+   <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" /> 
+
+
+   
+   <!-- catchall field, containing all other searchable text fields (implemented
+        via copyField further on in this schema  -->
+   <!--field name="text" type="text_general" indexed="true" stored="false" multiValued="true"/-->
+   <field name="text" type="text_ja" indexed="true" stored="true" multiValued="true"/>
+   <field name="text_ms" type="text_ms" indexed="true" stored="true" multiValued="true"/>
+   <dynamicField name="*_s"  type="text_s"  indexed="true"  stored="true"/>
+   <dynamicField name="*_ms"  type="text_ms"  indexed="true"  stored="true" multiValued="true"/>
+
+   <!-- 独自定義 -->
+   <dynamicField name="*_cjk" type="text_cjk" indexed="true" stored="true" multiValued="true"/>
+
+   <dynamicField name="*_uni" type="text_uni" indexed="true" stored="true" multiValued="true"/>
+   <dynamicField name="*_uni_katakana" type="text_uni_kana" indexed="true" stored="true" multiValued="true"/>
+   <dynamicField name="*_kuromoji" type="text_ja" indexed="true" stored="true" multiValued="true"/>
+   
+   <dynamicField name="*_i"  type="pint"    indexed="true"  stored="true"/>
+   <dynamicField name="*_is" type="pint"    indexed="true"  stored="true"  multiValued="true"/>
+   <dynamicField name="*_s_ns"  type="string"  indexed="true"  stored="false" />
+   <dynamicField name="*_ss" type="string"  indexed="true"  stored="true" multiValued="true"/>
+   <dynamicField name="*_l"  type="plong"   indexed="true"  stored="true"/>
+   <dynamicField name="*_l_ns"  type="plong"   indexed="true"  stored="false"/>
+   <dynamicField name="*_ls" type="plong"   indexed="true"  stored="true"  multiValued="true"/>
+   <dynamicField name="*_b"  type="boolean" indexed="true" stored="true"/>
+   <dynamicField name="*_bs" type="boolean" indexed="true" stored="true"  multiValued="true"/>
+   <dynamicField name="*_f"  type="pfloat"  indexed="true"  stored="true"/>
+   <dynamicField name="*_fs" type="pfloat"  indexed="true"  stored="true"  multiValued="true"/>
+   <dynamicField name="*_d"  type="pdouble" indexed="true"  stored="true"/>
+   <dynamicField name="*_ds" type="pdouble" indexed="true"  stored="true"  multiValued="true"/>
+
+   <dynamicField name="*_dt"  type="pdate"    indexed="true"  stored="true"/>
+   <dynamicField name="*_dts" type="pdate"    indexed="true"  stored="true" multiValued="true"/>
+   <dynamicField name="*_p"  type="location" indexed="true" stored="true"/>
+
+   <dynamicField name="*_c"   type="currency" indexed="true"  stored="true"/>
+
+   <dynamicField name="ignored_*" type="ignored" multiValued="true"/>
+
+   <dynamicField name="random_*" type="random" />
+
+ <uniqueKey>id</uniqueKey>
+
+  <copyField dest="text" source="title_kuromoji"/>
+  <copyField dest="text" source="parent_kuromoji"/>
+  <copyField dest="text" source="ancestor_kuromoji"/>
+  <copyField dest="text_cjk" source="TitleSynonym_ms"/>
+  <copyField dest="text" source="TitleSynonym_ms"/>
+  
+    <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
+    <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
+    <fieldType name="pint" class="solr.IntPointField" docValues="true"/>
+    <fieldType name="pfloat" class="solr.FloatPointField" docValues="true"/>
+    <fieldType name="plong" class="solr.LongPointField" docValues="true"/>
+    <fieldType name="pdouble" class="solr.DoublePointField" docValues="true"/>
+    <fieldType name="pints" class="solr.IntPointField" docValues="true" multiValued="true"/>
+    <fieldType name="pfloats" class="solr.FloatPointField" docValues="true" multiValued="true"/>
+    <fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
+    <fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
+    <fieldType name="pdate" class="solr.DatePointField" docValues="true"/>
+    <fieldType name="pdates" class="solr.DatePointField" docValues="true" multiValued="true"/>
+    <fieldType name="binary" class="solr.BinaryField"/>
+    <fieldType name="random" class="solr.RandomSortField" indexed="true" />
+    <fieldType name="ignored" stored="false" indexed="false" multiValued="true" class="solr.StrField" />
+    <fieldType name="point" class="solr.PointType" dimension="2" subFieldSuffix="_d"/>
+    <fieldType name="location" class="solr.LatLonPointSpatialField" docValues="true"/>
+    <fieldType name="currency" class="solr.CurrencyFieldType" amountLongSuffix="_l_ns" codeStrSuffix="_s_ns" defaultCurrency="USD" currencyConfig="currency.xml" />
+
+
+    <fieldType name="text_ja" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true" >
+      <analyzer type="index">
+        <charFilter class="solr.HTMLStripCharFilterFactory"/>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-old-chineseCharacter.txt"/>
+        <tokenizer class="solr.JapaneseTokenizerFactory" mode="search"  userDictionary="userdict_ja.txt"/>
+        <filter class="solr.SynonymFilterFactory" ignoreCase="true" expand="true" synonyms="synonymlessthan3.txt" />
+        <filter class="solr.SynonymFilterFactory" ignoreCase="true" expand="true" synonyms="synonymU.txt" />
+        <filter class="solr.SynonymFilterFactory" ignoreCase="true" expand="true" synonyms="synonym1.txt,synonym2.txt,synonym3.txt" />             <filter class="solr.JapaneseBaseFormFilterFactory"/>
+        <filter class="solr.JapanesePartOfSpeechStopFilterFactory" tags="lang/stoptags_ja.txt"/>
+        <filter class="solr.CJKWidthFilterFactory"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_ja.txt"/>
+        <filter class="solr.JapaneseKatakanaStemFilterFactory" minimumLength="4"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+      <analyzer type="query">
+        <charFilter class="solr.HTMLStripCharFilterFactory"/>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-old-chineseCharacter.txt"/>
+        <tokenizer class="solr.JapaneseTokenizerFactory" mode="search"  userDictionary="userdict_ja.txt"/>
+        <filter class="solr.SynonymFilterFactory" ignoreCase="true" expand="false" synonyms="synonymlessthan3.txt" />
+        <filter class="solr.SynonymFilterFactory" ignoreCase="true" expand="false" synonyms="synonymU.txt" />
+        <filter class="solr.SynonymFilterFactory" ignoreCase="true" expand="false" synonyms="synonym1.txt,synonym2.txt,synonym3.txt" /> 
+        <filter class="solr.JapaneseBaseFormFilterFactory"/>
+        <filter class="solr.JapanesePartOfSpeechStopFilterFactory" tags="lang/stoptags_ja.txt"/>
+        <filter class="solr.CJKWidthFilterFactory"/>
+        <filter class="solr.StopFilterFactory" ignoreCase="true" words="lang/stopwords_ja.txt"/>
+        <filter class="solr.JapaneseKatakanaStemFilterFactory" minimumLength="4"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
+
+    <!-- CJK bigram (see text_ja for a Japanese configuration using morphological analysis) -->
+    <fieldType name="text_cjk" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true">
+      <analyzer>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-old-chineseCharacter.txt"/>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-ja-kana.txt"/>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.CJKWidthFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.CJKBigramFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
+    <fieldType name="text_cjk_kana" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true">
+      <analyzer>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-ja-kana.txt"/>
+        <tokenizer class="solr.StandardTokenizerFactory"/>
+        <filter class="solr.CJKWidthFilterFactory"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+        <filter class="solr.CJKBigramFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
+    <fieldType name="text_ms" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true">
+      <analyzer>
+        <tokenizer class="solr.KeywordTokenizerFactory" />
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-old-chineseCharacter.txt"/>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-ja-kana.txt"/>
+        <filter class="solr.SynonymFilterFactory" synonyms="synonymPerfectMatch.txt" ignoreCase="false" expand="true"/>
+        <filter class="solr.LengthFilterFactory" min="1" max="10000" /> <!-- Prevent DIH Error 2018 -->
+     </analyzer>
+    </fieldType>
+
+    <fieldType name="text_s" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true">
+      <analyzer>
+        <tokenizer class="solr.KeywordTokenizerFactory"/>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-old-chineseCharacter.txt"/>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-ja-kana.txt"/>
+        <filter class="solr.LengthFilterFactory" min="1" max="10000" /> <!-- Prevent DIH Error 2018 -->
+      </analyzer>
+    </fieldType>
+
+    <fieldType name="text_uni" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true">
+      <analyzer>
+        <tokenizer class="solr.KeywordTokenizerFactory"/>
+        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+        <filter class="solr.EdgeNGramFilterFactory" minGramSize="1" maxGramSize="1"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+    <fieldType name="text_uni_kana" class="solr.TextField" positionIncrementGap="100" autoGeneratePhraseQueries="true">
+      <analyzer>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-ja-kana.txt"/>
+        <tokenizer class="solr.KeywordTokenizerFactory"/>
+        <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+        <filter class="solr.EdgeNGramFilterFactory" minGramSize="1" maxGramSize="1"/>
+        <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+
+
+    <!-- JPOC Query Parser 2018 -->
+    <fieldType name="jpoc_query" class="solr.TextField" indexed="false" stored="false">
+        <analyzer type="query">
+            <tokenizer class="solr.PatternTokenizerFactory" pattern="[+;:,\s©®℗℠™&amp;()/\p{Punct}&lt;&gt;»«]+" />
+            <filter class="solr.LowerCaseFilterFactory" />
+            <filter class="solr.StopFilterFactory" words="stopwords.txt" ignoreCase="true"/>
+        </analyzer>
+    </fieldType>
+
+    <fieldType name="jpoc_subtopics" class="solr.TextField" indexed="false" stored="false">
+         <analyzer type="query">
+            <tokenizer class="solr.KeywordTokenizerFactory" />
+            <filter class="solr.SynonymFilterFactory" synonyms="jpoc-subtopics.txt" ignoreCase="true" expand="false"/>
+         </analyzer>
+    </fieldType>
+
+</schema>

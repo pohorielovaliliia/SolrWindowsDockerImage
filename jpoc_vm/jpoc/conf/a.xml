@@ -1,0 +1,617 @@
+﻿<dataConfig>
+  <dataSource type="JdbcDataSource" name="JPOC_DS1" driver="com.microsoft.sqlserver.jdbc.SQLServerDriver" url="jdbc:sqlserver://sqlserver-jpoc;databaseName=JPOC_IT"
+     user="sa" password="PaSSw0rd" readOnly="true"/>
+
+	<!--<dataSource type="JdbcDataSource" name="JPOC_DS1" driver="com.microsoft.sqlserver.jdbc.SQLServerDriver" url="jdbc:sqlserver://localhost;databaseName=JPOC_VM"
+   user="V-JPOCUser" password="V-JPOCUser" readOnly="true"/> -->
+  <document>
+    <entity name="autocompleteMcalc" threads="1" dataSource="JPOC_DS1" pk="id" query="select 'MC_'+s.name as id,s.title,'mcalc' as contentype,s.name as group_s, s.name as contentid, 1 as sequence from T_JP_MedicalCalculator s 
+    UNION  select 'MC_eGFR_Estimated_2' as id,substring(title,1,charindex('(',s2.title)-1) as title,'mcalc' as contentype,'eGFR_Estimated' as group_s, 'eGFR_Estimated' as contentid, 100 as sequence from T_JP_MedicalCalculator s2 where s2.name = 'eGFR_Estimated'"
+ transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer">
+      <field column ="id" name="id"  stripHTML="false" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="title" name="originalword_s" stripHTML="true" />
+      <field column ="title" name="autocomplete_s" stripHTML="true" />
+      <field column ="title" name="autocomplete_ms" stripHTML="true" />
+      <field column ="title" name="autocomplete_kuromoji" stripHTML="true" />
+      <field column ="title" name="autocomplete_cjk" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+    <entity name="autocompleteDisease" threads="1" dataSource="JPOC_DS1" pk="id" query="
+SELECT tjd.id,tjd.title,tjd.sequence*100 as sequence,N'disease' as contentype,cast(N'Dis' as nvarchar)+cast(tjd.id as nvarchar) as group_s,tjd.id as contentid FROM T_JP_Disease as tjd where tjd.defunct=0 and tjd.status='A'
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="id" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="title" name="originalword_s"  stripHTML="true" />
+      <field column ="title" name="autocomplete_s"  stripHTML="true" />
+      <field column ="title" name="autocomplete_ms"  stripHTML="true" />
+      <field column ="title" name="autocomplete_kuromoji"  stripHTML="true" />
+      <field column ="title" name="autocomplete_cjk"  stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+    <entity name="autocompleteDiseaseSynonym" threads="1" dataSource="JPOC_DS1" pk="id" query="
+SELECT 'DISEASESYNM_'+right('000'+cast(tjd.id as nvarchar),4) as id,tjd.title,tjd.synonyms,tjd.sequence*0.000000001 as sequence,N'疾患' as contentype,cast(N'Dis' as nvarchar)+cast(id as nvarchar) as group_s,tjd.id as contentid FROM T_JP_Disease tjd where tjd.defunct=0 and tjd.status='A'
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="id" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="title" name="originalword_s" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_s" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_ms" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_kuromoji" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_cjk" splitBy="≡" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+    <entity name="autocompleteLab" dataSource="JPOC_DS1" pk="srl_id" query="
+SELECT 'SRLID_'+lab.srl_id as srl_id,lab.name,cast(lab.rank as real)*10+1,N'lab' as contentype,'SRL'+lab.srl_id as group_s,lab.srl_id as contentid FROM T_JP_LabTestTable1 lab
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="srl_id" name="id"  stripHTML="true" />
+      <field column ="rank" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="name" name="originalword_s" splitBy="≡" stripHTML="true" />
+      <field column ="name" name="autocomplete_s"  stripHTML="true" />
+      <field column ="name" name="autocomplete_ms"  stripHTML="true" />
+      <field column ="name" name="autocomplete_kuromoji"  stripHTML="true" />
+      <field column ="name" name="autocomplete_cjk"  stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+    <entity name="autocompleteDrugGeneral" threads="1" dataSource="JPOC_DS1" pk="code" query="
+select 'JPCGENERAL_'+dd.code as code,case when charindex('&lt;BR&gt;',dd.collective_name)&gt;0 then SUBSTRING(dd.collective_name,1,charindex('&lt;BR&gt;',dd.collective_name)-1) when charindex('&lt;BR/&gt;',dd.collective_name)&gt;0 then SUBSTRING(dd.collective_name,1,charindex('&lt;BR/&gt;',dd.collective_name)-1) when charindex('&lt;br&gt;',dd.collective_name)&gt;0 then SUBSTRING(dd.collective_name,1,charindex('&lt;br&gt;',dd.collective_name)-1) when charindex('&lt;br/&gt;',dd.collective_name)&gt;0 then SUBSTRING(dd.collective_name,1,charindex('&lt;br/&gt;',dd.collective_name)-1) else collective_name end as collective_name,dd.sequence as sequence,'drug' as contentype,cast('JPC' as nvarchar)+cast(dd.code as nvarchar) as group_s,cast(dd.code as int) as contentid FROM T_JP_DrugData dd where sequence > 0.00001 order by sequence desc
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer">
+      <field column ="code" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="collective_name" name="originalword_s"  stripHTML="true" />
+      <field column ="collective_name" name="autocomplete_s"  stripHTML="true" />
+      <field column ="collective_name" name="autocomplete_ms"  stripHTML="true" />
+      <field column ="collective_name" name="autocomplete_kuromoji"  stripHTML="true" />
+      <field column ="collective_name" name="autocomplete_cjk"  stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+    <entity name="autocompleteDrugGeneric" threads="1" dataSource="JPOC_DS1" pk="code" query="
+select 'JPCGENERIC_'+dd.code as code,replace(replace(replace(replace(dd.generic_name,'&lt;br&gt;',','),'&lt;br/&gt;',','),'&lt;BR&gt;',','),'&lt;BR/&gt;',',') as generic_name,replace(replace(replace(replace(dd.generic_name,'&lt;br&gt;','¶'),'&lt;br/&gt;','¶'),'&lt;BR&gt;','¶'),'&lt;BR/&gt;','¶') as generic_name_multi,dd.sequence as sequence,'drug' as contentype,cast(N'JPC' as nvarchar)+cast(dd.code as nvarchar) as group_s,cast(dd.code as int) as contentid FROM T_JP_DrugData dd where sequence > 0.00001 order by sequence desc
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer">
+      <field column ="code" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="generic_name" name="originalword_s"  stripHTML="true" />
+      <field column ="generic_name" name="autocomplete_s"  stripHTML="true" />
+      <field column ="generic_name" name="autocomplete_ms"  stripHTML="true" />
+      <field column ="generic_name_multi" name="autocomplete_kuromoji" splitBy="¶"  stripHTML="true" />
+      <field column ="generic_name_multi" name="autocomplete_cjk" splitBy="¶" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+    <entity name="autocompleteDrugNameSynonym" threads="1" dataSource="JPOC_DS1" pk="code" query="
+SELECT 'JPCNAMESYNM_'+code as code,therapeutic_class,general_name,namesynonym as synonyms
+,replace(replace(replace(replace(general_name,'&lt;br&gt;','¶'),'&lt;br/&gt;','¶'),'&lt;BR&gt;','¶'),'&lt;BR/&gt;','¶') as general_name_multi
+,case when charindex('&lt;BR&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR&gt;',collective_name)-1) 
+when charindex('&lt;BR/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR/&gt;',collective_name)-1) 
+when charindex('&lt;br&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br&gt;',collective_name)-1) 
+when charindex('&lt;br/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br/&gt;',collective_name)-1) 
+else collective_name end as collective_name,sequence as sequence,'drugnamesynonym' as contentype
+,cast('JPC' as nvarchar)+cast(code as nvarchar) as group_s,generic_name,cast(code as int) as contentid 
+FROM T_JP_DrugData where namesynonym is not null and sequence > 0.00001 order by sequence desc
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="code" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="general_name" name="originalword_s" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_ms" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_kuromoji" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_cjk" splitBy="≡" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+    <entity name="autocompleteDrugSubcategory" threads="1" dataSource="JPOC_DS1" pk="code" query="
+select 'JPCSUBCAT_'+min(dd.code) as code,dd.therapeutic_class,max(dd.sequence) as sequence,'drugsubctg' as contentype
+,cast(N'JPC' as nvarchar)+cast(min(dd.code) as nvarchar) as group_s,cast(min(dd.code) as int) as contentid 
+FROM T_JP_DrugData dd where sequence > 0.00001 group by dd.therapeutic_class order by sequence desc
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer">
+      <field column ="code" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="therapeutic_class" name="originalword_s" stripHTML="true" />
+      <field column ="therapeutic_class" name="autocomplete_s" stripHTML="true" />
+      <field column ="therapeutic_class" name="autocomplete_ms" stripHTML="true" />
+      <field column ="therapeutic_class" name="autocomplete_kuromoji" stripHTML="true" />
+      <field column ="therapeutic_class" name="autocomplete_cjk" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+    <entity name="autocompleteDrugSugCtgSynonym" threads="1" dataSource="JPOC_DS1" pk="code" query="
+SELECT 'JPCSUBCATSYNM_'+code as code,therapeutic_class,general_name,categorysynonym as synonyms
+,replace(replace(replace(replace(general_name,'&lt;br&gt;','¶'),'&lt;br/&gt;','¶'),'&lt;BR&gt;','¶'),'&lt;BR/&gt;','¶') as general_name_multi
+,case when charindex('&lt;BR&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR&gt;',collective_name)-1) 
+when charindex('&lt;BR/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR/&gt;',collective_name)-1) 
+when charindex('&lt;br&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br&gt;',collective_name)-1) 
+when charindex('&lt;br/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br/&gt;',collective_name)-1) 
+else collective_name end as collective_name,sequence as sequence,'drugsubctgsynonym' as contentype
+,cast('JPC' as nvarchar)+cast(code as nvarchar) as group_s,generic_name,cast(code as int) as contentid 
+FROM T_JP_DrugData where categorysynonym is not null and sequence > 0.00001 order by sequence desc
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="code" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="general_name" name="originalword_s" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_ms" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_kuromoji" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="autocomplete_cjk" splitBy="≡" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+    <entity name="autocompleteHoken" threads="1" dataSource="JPOC_DS1" pk="id" query="
+select s.dir_path+':'+s.file_name as id,s.title,'insurance' as contentype,'Hok'+s.dir_path+':'+s.file_name as group_s
+,s.dir_path+'/'+s.file_name as contentid from T_JP_Shirobon s where lower(rtrim(ltrim(s.file_name))) 
+not in('index.html')
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer">
+      <field column ="id" name="id"  stripHTML="false" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="title" name="originalword_s" stripHTML="true" />
+      <field column ="title" name="autocomplete_s" stripHTML="true" />
+      <field column ="title" name="autocomplete_ms" stripHTML="true" />
+      <field column ="title" name="autocomplete_kuromoji" stripHTML="true" />
+      <field column ="title" name="autocomplete_cjk" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="contentid" name="contentid_s" />
+    </entity>
+
+    <entity name="titlesearchDisease" threads="1" dataSource="JPOC_DS1" pk="id" query="SELECT 'TS_'+right('000'+cast(tjd.id as nvarchar),4) as id,tjd.title,tjd.sequence*100 as sequence,N'disease' as contentype,cast(N'Dis' as nvarchar)+cast(tjd.id as nvarchar) as group_s,tjd.synonyms,N'' as treevalue FROM T_JP_Disease as tjd where tjd.defunct=0 and tjd.status='A'" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="id" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="title" name="originalword_s"  stripHTML="true" />
+      <field column ="title" name="titlesearch_ms"  stripHTML="true" />
+      <!-- field column ="synonyms" name="titlesearch_ms" splitBy="≡" stripHTML="true" / -->
+      <field column ="title" name="titlesearch_kuromoji"  stripHTML="true" />
+      <field column ="title" name="titlesearch_cjk"  stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="treevalue" name="treevalue_s" stripHTML="false" />
+    </entity>
+    <entity name="titlesearchDiseaseSynonym" threads="1" dataSource="JPOC_DS1" pk="id" query="SELECT 'TS_DISEASESYNM_'+right('000'+cast(tjd.id as nvarchar),4) as id,tjd.title,tjd.synonyms,tjd.sequence*0.000000001 as sequence,N'疾患' as contentype,cast(N'Dis' as nvarchar)+cast(tjd.id as nvarchar) as group_s,N'' as treevalue FROM T_JP_Disease tjd where tjd.defunct=0 and tjd.status='A'" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="id" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="title" name="originalword_s" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="titlesearch_ms" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="titlesearch_kuromoji" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="titlesearch_cjk" splitBy="≡" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="treevalue" name="treevalue_s" stripHTML="false" />
+    </entity>
+    <entity name="titlesearchLab" threads="1" dataSource="JPOC_DS1" pk="srl_id" query="SELECT 'TS_SRLID_'+srl_id as srl_id,name,cast(rank as real)*10+1,N'lab' as contentype,cast(N'SRL' as nvarchar)+cast(srl_id as nvarchar) as group_s,N'' as treevalue FROM T_JP_LabTestTable1" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="srl_id" name="id"  stripHTML="true" />
+      <field column ="rank" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="name" name="originalword_s" splitBy="≡" stripHTML="true" />
+      <field column ="name" name="titlesearch_ms"  stripHTML="true" />
+      <field column ="name" name="titlesearch_kuromoji"  stripHTML="true" />
+      <field column ="name" name="titlesearch_cjk"  stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="treevalue" name="treevalue_s" stripHTML="false" />
+    </entity>
+    <entity name="titlesearchDrugGeneral" threads="1" dataSource="JPOC_DS1" pk="code" query="
+select 'TS_JPCGENERAL_'+code as code,therapeutic_class,general_name,replace(replace(replace(replace(general_name,'&lt;br&gt;','¶'),'&lt;br/&gt;','¶'),'&lt;BR&gt;','¶'),'&lt;BR/&gt;','¶') as general_name_multi
+,case when charindex('&lt;BR&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR&gt;',collective_name)-1) when charindex('&lt;BR/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR/&gt;',collective_name)-1) when charindex('&lt;br&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br&gt;',collective_name)-1) when charindex('&lt;br/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br/&gt;',collective_name)-1) else collective_name end as collective_name
+,sequence as sequence,'drug' as contentype,cast('JPC' as nvarchar)+cast(code as nvarchar) as group_s,generic_name,treevalue as treevalue FROM T_JP_DrugData where sequence > 0.00001 order by sequence desc" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer">
+      <field column ="code" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="general_name" name="originalword_s"  stripHTML="false" />
+      <field column ="therapeutic_class" name="drugsubctg_ms"  stripHTML="true" />
+      <field column ="therapeutic_class" name="drugsubctg_kuromoji"  stripHTML="true" />
+      <field column ="therapeutic_class" name="drugsubctg_cjk"  stripHTML="true" />
+      <field column ="general_name" name="titlesearch_ms" stripHTML="false" />
+      <field column ="general_name" name="titlesearch_kuromoji" stripHTML="false" />
+      <field column ="general_name" name="titlesearch_cjk" stripHTML="false" />
+      <field column ="generic_name" name="titlesearch_ms" stripHTML="false" />
+      <field column ="collective_name" name="titlesearch_ms" stripHTML="false" />
+      <field column ="group_s" name="group_s" />
+      <field column ="treevalue" name="treevalue_s" stripHTML="false" />
+    </entity>
+
+    <entity name="titlesearchDrugNameSynonym" threads="1" dataSource="JPOC_DS1" pk="code" query="
+SELECT 'TS_JPCNAMESYNM_'+code as code,therapeutic_class,general_name,namesynonym as synonyms,replace(replace(replace(replace(general_name,'&lt;br&gt;','¶'),'&lt;br/&gt;','¶'),'&lt;BR&gt;','¶'),'&lt;BR/&gt;','¶') as general_name_multi,case when charindex('&lt;BR&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR&gt;',collective_name)-1) when charindex('&lt;BR/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR/&gt;',collective_name)-1) when charindex('&lt;br&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br&gt;',collective_name)-1) when charindex('&lt;br/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br/&gt;',collective_name)-1) else collective_name end as collective_name,sequence as sequence,'drugnamesynonym' as contentype,cast('JPC' as nvarchar)+cast(code as nvarchar) as group_s,generic_name,treevalue as treevalue FROM T_JP_DrugData where namesynonym is not null and sequence > 0.00001 order by sequence desc
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="code" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="general_name" name="originalword_s" splitBy="≡" stripHTML="false" />
+      <field column ="synonyms" name="titlesearch_ms" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="titlesearch_kuromoji" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="titlesearch_cjk" splitBy="≡" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="therapeutic_class" name="drugsubctg_ms"  stripHTML="true" />
+      <field column ="therapeutic_class" name="drugsubctg_kuromoji"  stripHTML="true" />
+      <field column ="therapeutic_class" name="drugsubctg_cjk"  stripHTML="true" />
+      <field column ="treevalue" name="treevalue_s" stripHTML="false" />
+    </entity>
+    <entity name="titlesearchDrugSubCtgSynonym" threads="1" dataSource="JPOC_DS1" pk="code" query="SELECT 'TS_JPCSUBCTGSYNM_'+code as code,therapeutic_class,general_name,categorysynonym as synonyms,replace(replace(replace(replace(general_name,'&lt;br&gt;','¶'),'&lt;br/&gt;','¶'),'&lt;BR&gt;','¶'),'&lt;BR/&gt;','¶') as general_name_multi,case when charindex('&lt;BR&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR&gt;',collective_name)-1) when charindex('&lt;BR/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;BR/&gt;',collective_name)-1) when charindex('&lt;br&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br&gt;',collective_name)-1) when charindex('&lt;br/&gt;',collective_name)&gt;0 then SUBSTRING(collective_name,1,charindex('&lt;br/&gt;',collective_name)-1) else collective_name end as collective_name,sequence as sequence,'drugsubctgsynonym' as contentype,cast('JPC' as nvarchar)+cast(code as nvarchar) as group_s,generic_name,treevalue as treevalue FROM T_JP_DrugData where categorysynonym is not null and sequence > 0.00001 order by sequence desc" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="code" name="id"  stripHTML="true" />
+      <field column ="sequence" name="score_d" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="general_name" name="originalword_s" splitBy="≡" stripHTML="false" />
+      <field column ="synonyms" name="titlesearch_ms" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="titlesearch_kuromoji" splitBy="≡" stripHTML="true" />
+      <field column ="synonyms" name="titlesearch_cjk" splitBy="≡" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="therapeutic_class" name="drugsubctg_ms"  stripHTML="true" />
+      <field column ="therapeutic_class" name="drugsubctg_kuromoji"  stripHTML="true" />
+      <field column ="therapeutic_class" name="drugsubctg_cjk"  stripHTML="true" />
+      <field column ="treevalue" name="treevalue_s" stripHTML="false" />
+    </entity>
+    <entity name="titlesearchHoken" threads="1" dataSource="JPOC_DS1" pk="id" query="select 'TS_'+s.dir_path+':'+s.file_name as id,s.title,'insurance' as contentype,'Hok'+s.dir_path+':'+s.file_name as group_s,N'' as treevalue from T_JP_Shirobon s where lower(rtrim(ltrim(s.file_name))) not in('index.html')" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer">
+      <field column ="id" name="id"  stripHTML="true" />
+      <field column ="contentype" name="contentype_s" />
+      <field column ="title" name="originalword_s" stripHTML="true" />
+      <field column ="title" name="titlesearch_ms" stripHTML="true" />
+      <field column ="title" name="titlesearch_kuromoji" stripHTML="true" />
+      <field column ="title" name="titlesearch_cjk" stripHTML="true" />
+      <field column ="group_s" name="group_s" />
+      <field column ="treevalue" name="treevalue_s" stripHTML="false" />
+    </entity>
+
+
+
+
+    <entity name="fulltextsearchDisease" threads="1" dataSource="JPOC_DS1" pk="pkid" query="
+select 'DISEASE_'+cast(x.main_id as nvarchar(max))+'_'+x.cfid+'_'+cast(row_number() over(order by x.type,x.main_id,x.cfid) as nvarchar(max)) as pkid,x.type,'DIS_'+cast(x.main_id as nvarchar(max)) as main_id,x.actiontype,x.cfid,x.title,x.subtitle,x.title as title_whtml,x.subtitle as subtitle_whtml,x.body,x.url,x.sequence as sequence,x.main_id+x.cfid as group_s,x.tb_image,x.image_url, x.ad_image, x.popup_type,x.synonyms as synonym1,N'' as synonym2,'' as category1,N'' as treevalue,cast(1 as bit) as search_flag, created_date, important, body as 'contents', REPLACE(x.title,N'・',N'') as 'plaintitle'  from ( 
+select 'disease_text' as type,cast(id as nvarchar(max)) as main_id,N'_' as actiontype,'ID0801' as cfid,case when charindex(N'(治療',d.title,1) > 0 then substring(d.title,1,charindex(N'(治療',d.title,1)-1) else d.title end as title,N'概要・推奨' as subtitle,cast(information as nvarchar(max)) as body,'ContentPage.aspx?diseaseid='+cast(id as varchar) as url,sequence as sequence,'' as tb_image, '' as image_url, '' as ad_image, '' as popup_type,isnull(cast(d.synonyms as nvarchar(max)),N'') as synonyms, CONVERT(varchar, d.created_date, 20) as created_date, CAST(0 as bit) as important from T_JP_Disease as d where d.status = 'A'
+ UNION 
+select 'disease_text' as type,cast(d.id as nvarchar(max)) as main_id,N'_' as actiontype,isnull(soss.code,N'_') as cfid,case when charindex(N'(治療',d.title,1) > 0 then substring(d.title,1,charindex(N'(治療',d.title,1)-1) else d.title end as title,soss.title as subtitle,cast(soss.comments as nvarchar(max)) as body,'ContentPage.aspx?diseaseid='+cast(d.id as varchar)+'#'+cast(soss.code as varchar) as url,d.sequence as sequence,'' as tb_image, '' as image_url, '' as ad_image, '' as popup_type,isnull(cast(d.synonyms as nvarchar(max)),N'') as synonyms, CONVERT(varchar, d.created_date, 20) as created_date, CAST(0 as bit) as important from T_JP_SituationOrderSetSample as soss inner join T_JP_Situation as s on soss.situation_id = s.id inner join T_JP_Disease as d on s.disease_id = d.id where s.defunct = 0 and d.status = 'A' and soss.defunct = 0
+ UNION 
+select 'disease_text' as type,cast(dat.disease_id as nvarchar(max)) as main_id, isnull(dat.type,N'_') as actiontype,isnull(ai.code,N'_') as cfid,case when charindex(N'(治療',d.title,1) > 0 then substring(d.title,1,charindex(N'(治療',d.title,1)-1) else d.title end as title,ai.title as subtitle,cast(ai.body as nvarchar(max)) as body,'ContentPage.aspx?diseaseid='+cast(d.id as varchar)+'#'+ai.code as url,d.sequence as sequence,'' as tb_image, '' as image_url, '' as ad_image, '' as popup_type,isnull(cast(d.synonyms as nvarchar(max)),N'') as synonyms, CONVERT(varchar, d.created_date, 20) as created_date, CAST(0 as bit) as important from T_JP_ActionItem as ai inner join T_JP_DiseaseActionType as dat on ai.disease_actiontype_id = dat.id inner join T_JP_Disease as d on dat.disease_id = d.id where d.status = 'A'
+ UNION 
+select 'disease_text' as type,cast(ed.disease_id as nvarchar(max)) as main_id,N'_' as actiontype,isnull(e.code,N'_') as cfid,case when charindex(N'(治療',d.title,1) > 0 then substring(d.title,1,charindex(N'(治療',d.title,1)-1) else d.title end as title,cast(e.header_message as nvarchar(max)) as subtitle,cast(e.description as nvarchar(max)) as body,'ContentPage.aspx?diseaseid='+cast(d.id as varchar)+'#'+e.code as url,d.sequence as sequence,'' as tb_image, '' as image_url, '' as ad_image, '' as popup_type,isnull(cast(d.synonyms as nvarchar(max)),N'') as synonyms, CONVERT(varchar, d.created_date, 20) as created_date, CAST(0 as bit) as important from T_JP_Evidence as e inner join T_JP_EvidenceDisease as ed on e.id = ed.evidence_id inner join T_JP_Disease as d on ed.disease_id = d.id where d.status = 'A'
+ UNION 
+select 'disease_image' as type,cast(d.id as nvarchar(max)) as main_id,N'_' as actiontype,isnull(i.code,N'_') as cfid,case when charindex(N'(治療',d.title,1) > 0 then substring(d.title,1,charindex(N'(治療',d.title,1)-1) else d.title end as title,i.title as subtitle,cast(i.description as nvarchar(max)) as body,'imageDetails.aspx?DiseaseID='+cast(d.id as nvarchar(max))+'&amp;imagecode='+isnull(i.code,N'_')  as url,d.sequence as sequence,I.tb_image as tb_image, 'imageDetails.aspx?DiseaseID='+cast(d.id as nvarchar(max))+'&amp;imagecode='+isnull(i.code,N'_')  as image_url, I.ad_image as ad_image,isnull(i.popup_type,'') as popup_type,isnull(cast(REPLACE(imp.searchkeyword,' ','') as nvarchar(max)),N'') as synonyms, CONVERT(varchar, d.created_date, 20) as created_date, CASE WHEN imp.important IS NOT NULL THEN imp.important ELSE CAST(0 as bit) end as important from T_JP_Image as I inner join T_JP_ImgMapping as im on im.image_id = i.id inner join T_JP_Disease as d on im.disease_id = d.id LEFT OUTER JOIN T_JP_Image_Important as imp on im.disease_id = imp.disease_id AND I.code = imp.code where d.status = 'A' and i.status = 'A' and i.defunct = 0  and (imp.NonPublish IS NULL OR imp.NonPublish = 0)
+ UNION 
+select 'disease_text' as type,cast(d.id as nvarchar(max)) as main_id,N'_' as actiontype,isnull(dd.code,N'_') as cfid,case when charindex(N'(治療',d.title,1) > 0 then substring(d.title,1,charindex(N'(治療',d.title,1)-1) else d.title end as title,N'鑑別疾患' as subtitle,cast(dd.differential_diagnosis as nvarchar(max)) as body,'ContentPage.aspx?diseaseid='+cast(d.id as varchar)+'#'+dd.code as url,d.sequence as sequence,'' as tb_image, '' as image_url, '' as ad_image, '' as popup_type,isnull(cast(d.synonyms as nvarchar(max)),N'') as synonyms, CONVERT(varchar, d.created_date, 20) as created_date, CAST(0 as bit) as important from T_JP_DifferentialDiagnosis as dd inner join T_JP_Disease as d on dd.disease_id = d.id where d.status = 'A'
+ UNION
+select 'disease_dd' as type,cast(d.id as nvarchar(max)) as main_id,N'_' as actiontype,isnull(dd.code,N'_') as cfid,case when charindex(N'(治療',d.title,1) > 0 then substring(d.title,1,charindex(N'(治療',d.title,1)-1) else d.title end as title,dd.title as subtitle,cast(dd.content as nvarchar(max)) as body,'ContentPage.aspx?diseaseid='+cast(d.id as varchar)+'#'+dd.code as url,dd.sequence as sequence,'' as tb_image, '' as image_url, '' as ad_image, cast(dd.priority as nvarchar(max)) as popup_type,isnull(cast(d.synonyms as nvarchar(max)),N'') as synonyms, CONVERT(varchar, d.created_date, 20) as created_date, CAST(0 as bit) as important from T_JP_DifferentialDiagnosis_AnswerBox as dd inner join T_JP_Disease as d on dd.disease_id = d.id where d.status = 'A'
+ UNION
+select 'disease_prescription' as type,cast(d.id as nvarchar(max)) as main_id,N'_' as actiontype, p.code as cfid,d.title  as title,p.title as subtitle,cast(p.body as nvarchar(max)) as body,
+'contentpage.aspx?diseaseid='+cast(d.id as varchar)+'#prescription_anchor_'+cast((p.prescription_sequential_id -1) as varchar) as url,prescription_sequential_id as sequence,
+'' as tb_image, '' as image_url, '' as ad_image, '' as popup_type,isnull(cast(d.synonyms as nvarchar(max)),N'') as synonyms, CONVERT(varchar, d.created_date, 20) as created_date, CAST(0 as bit) as important 
+from T_JP_Prescription p
+INNER JOIN T_JP_Disease as d on p.disease_id = d.id
+where d.status = 'A'
+) x
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="pkid"     name="id" />
+      <field column ="main_id"  name="mainid_s"              stripHTML="false" />
+      <field column ="cfid"     name="CFID_s"                stripHTML="false" />
+      <field column ="type"     name="type_s"                stripHTML="false" />
+      <field column ="title"    name="FTStitle_s"            stripHTML="true" />
+      <field column ="title"    name="FTStitle_ms"           stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji"     stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji2"    stripHTML="true" />
+      <field column ="title"    name="FTStitle_cjk"          stripHTML="true" />
+      <!-- field column ="title"    name="FTSdisease_kuromoji"  stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSdisease_cjk"       stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSdisease_ms"        stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_kuromoji"      stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_kuromoji2"     stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_cjk"           stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_ms"            stripHTML="true" / -->
+      <field column ="subtitle" name="FTSsubtitle_s"         stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_ms"        stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji"  stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji2" stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_cjk"       stripHTML="true" />
+      <field column ="actiontype" name="FTSactiontype_s"         stripHTML="true" />
+      <!-- field column ="subtitle" name="FTSdisease_kuromoji"  stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSdisease_kuromoji2" stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSdisease_cjk"       stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSdisease_ms"        stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_kuromoji"      stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_cjk"           stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_ms"            stripHTML="true" / -->
+      <field column ="body"     name="FTSbody_s"             stripHTML="true" />
+      <field column ="body"     name="FTSbody_ms"            stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji"      stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji2"     stripHTML="true" />
+      <field column ="body"     name="FTSbody_cjk"           stripHTML="true" />
+      <field column ="contents"   name="contents_s"       stripHTML="false" />
+      <!-- field column ="body"     name="FTSdisease_kuromoji"  stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSdisease_kuromoji2" stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSdisease_cjk"       stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSdisease_ms"        stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_kuromoji"      stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_kuromoji2"     stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_cjk"           stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_ms"            stripHTML="true" / -->
+      <field column ="url"      name="FTSurl_s"             stripHTML="false" />
+      <field column ="group_s" name="group_s" />
+      <field column ="sequence" name="score_d"              stripHTML="false" />
+      <field column ="tb_image"      name="FTStb_image_s"   stripHTML="false" />
+      <field column ="ad_image"      name="FTSad_image_s"   stripHTML="false" />
+      <field column ="image_url"     name="FTSimage_url_s"  stripHTML="false" />
+      <field column ="popup_type"    name="FTSpopup_type_s" stripHTML="false" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_ms"        stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="category1"     name="FTScategory1_kuromoji"  stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_kuromoji2" stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_cjk"       stripHTML="true" />
+      <field column ="treevalue"     name="FTStreevalue_s"         stripHTML="false" />
+      <field column ="search_flag"   name="FTSsearch_flag_s"       stripHTML="false" />
+	  <field column ="created_date"   name="created_date_s"       stripHTML="false" />
+	  <field column ="important"   name="important_s"       stripHTML="false" />
+	  <field column ="plaintitle"   name="plaintitle_s"       stripHTML="false" />
+    </entity>
+    <entity name="fulltextsearchDrug" threads="1" dataSource="JPOC_DS1" pk="pkid" query="
+select 'DRUG_'+cast(x.main_id as varchar(max))+'_'+x.cfid+'_'+cast(row_number() over(order by x.type,x.main_id,x.cfid) as nvarchar(max)) as pkid,x.type,'DRG_'+cast(x.main_id as varchar(max)) as main_id,x.cfid,x.title,x.subtitle,x.body,x.url,case when isnull(x.sequence,0)&lt;1 then isnull(x.sequence,0)*0.1 else isnull(x.sequence,0)*50 end as sequence,x.main_id+x.cfid as group_s,N'' as tb_image,N'' as image_url,N'' as popup_type,x.namesynonym as synonym1,x.categorysynonym as synonym2,x.therapeutic_class as category1,x.treevalue as treevalue,isnull(search_flag,1) as search_flag, created_date, generic_name as 'generic_name', title as 'general_name', CASE WHEN  is_generic IS NOT NULL THEN  is_generic ELSE CAST(isnull(is_generic,0) as bit) end as is_generic, body as 'contents', collective_name  from ( 
+select 'drug' as type,dd.code_int,cast(dd.code as nvarchar(max)) as main_id,N'適応' as cfid,dd.general_name as title,N'【適応】' as subtitle,cast(dd.effect_usage as nvarchar(max)) as body,'drugDetails.aspx?code='+cast(cast(dd.code as integer) as varchar) as url,dd.sequence as sequence,cast(dd.generic_name as nvarchar(max))+N'≡'+cast(dd.preparation_name as nvarchar(max))+N'≡'+cast(dd.generic_name_en as nvarchar(max))+N'≡'+isnull(cast(dd.namesynonym as nvarchar(max)),N'') as namesynonym,isnull(cast(dd.categorysynonym as nvarchar(max)),N'') as categorysynonym,isnull(cast(dd.therapeutic_class as nvarchar(max)),N'') as therapeutic_class,dd.treevalue as treevalue,dd.search_flag as search_flag, CONVERT(varchar, created_date, 20) as created_date, dd.generic_name, dd.collective_name from T_JP_DrugData as dd where isnull(cast(dd.effect_usage as nvarchar(max)),N'')&lt;&gt;N''
+ UNION 
+select 'drug' as type,dd.code_int,cast(dd.code as nvarchar(max)) as main_id,N'禁忌' as cfid,dd.general_name as title,N'【禁忌】' as subtitle,cast(dd.contraindicate as nvarchar(max)) as body,'drugDetails.aspx?code='+cast(cast(dd.code as integer) as varchar) as url,dd.sequence as sequence,cast(dd.generic_name as nvarchar(max))+N'≡'+cast(dd.preparation_name as nvarchar(max))+N'≡'+cast(dd.generic_name_en as nvarchar(max))+N'≡'+isnull(cast(dd.namesynonym as nvarchar(max)),N'') as namesynonym,isnull(cast(dd.categorysynonym as nvarchar(max)),N'') as categorysynonym,isnull(cast(dd.therapeutic_class as nvarchar(max)),N'') as therapeutic_class,dd.treevalue as treevalue,dd.search_flag, CONVERT(varchar, created_date, 20) as created_date, dd.generic_name, dd.collective_name from T_JP_DrugData as dd where isnull(cast(dd.contraindicate as nvarchar(max)),N'')&lt;&gt;N''
+ UNION 
+select 'drug' as type,dd.code_int,cast(dd.code as nvarchar(max)) as main_id,N'注意' as cfid,dd.general_name as title,N'【注意】' as subtitle,cast(dd.caution as nvarchar(max)) as body,'drugDetails.aspx?code='+cast(cast(dd.code as integer) as varchar) as url,dd.sequence as sequence,cast(dd.generic_name as nvarchar(max))+N'≡'+cast(dd.preparation_name as nvarchar(max))+N'≡'+cast(dd.generic_name_en as nvarchar(max))+N'≡'+isnull(cast(dd.namesynonym as nvarchar(max)),N'') as namesynonym,isnull(cast(dd.categorysynonym as nvarchar(max)),N'') as categorysynonym,isnull(cast(dd.therapeutic_class as nvarchar(max)),N'') as therapeutic_class,dd.treevalue as treevalue,dd.search_flag, CONVERT(varchar, created_date, 20) as created_date, dd.generic_name, dd.collective_name from T_JP_DrugData as dd where isnull(cast(dd.caution as nvarchar(max)),N'')&lt;&gt;N''
+ UNION 
+select 'drug' as type,dd.code_int,cast(dd.code as nvarchar(max)) as main_id,N'併用禁止' as cfid,dd.general_name as title,N'【併用禁止】' as subtitle,cast(dd.not_combined_use as nvarchar(max)) as body,'drugDetails.aspx?code='+cast(cast(dd.code as integer) as varchar) as url,dd.sequence as sequence,cast(dd.generic_name as nvarchar(max))+N'≡'+cast(dd.preparation_name as nvarchar(max))+N'≡'+cast(dd.generic_name_en as nvarchar(max))+N'≡'+isnull(cast(dd.namesynonym as nvarchar(max)),N'') as namesynonym,isnull(cast(dd.categorysynonym as nvarchar(max)),N'') as categorysynonym,isnull(cast(dd.therapeutic_class as nvarchar(max)),N'') as therapeutic_class,dd.treevalue as treevalue,dd.search_flag, CONVERT(varchar, created_date, 20) as created_date, dd.generic_name, dd.collective_name from T_JP_DrugData as dd where isnull(cast(dd.not_combined_use as nvarchar(max)),N'')&lt;&gt;N''
+ UNION 
+select 'drug' as type,dd.code_int,cast(dd.code as nvarchar(max)) as main_id,N'併用注意' as cfid,dd.general_name as title,N'【併用注意】' as subtitle,cast(dd.caution_combined_use as nvarchar(max)) as body,'drugDetails.aspx?code='+cast(cast(dd.code as integer) as varchar) as url,dd.sequence as sequence,cast(dd.generic_name as nvarchar(max))+N'≡'+cast(dd.preparation_name as nvarchar(max))+N'≡'+cast(dd.generic_name_en as nvarchar(max))+N'≡'+isnull(cast(dd.namesynonym as nvarchar(max)),N'') as namesynonym,isnull(cast(dd.categorysynonym as nvarchar(max)),N'') as categorysynonym,isnull(cast(dd.therapeutic_class as nvarchar(max)),N'') as therapeutic_class,dd.treevalue as treevalue,dd.search_flag, CONVERT(varchar, created_date, 20) as created_date, dd.generic_name, dd.collective_name from T_JP_DrugData as dd where isnull(cast(dd.caution_combined_use as nvarchar(max)),N'')&lt;&gt;N''
+ UNION 
+select 'drug' as type,dd.code_int,cast(dd.code as nvarchar(max)) as main_id,N'重大な副作用' as cfid,dd.general_name as title,N'【重大な副作用】' as subtitle,cast(dd.serious_adverse_event as nvarchar(max)) as body,'drugDetails.aspx?code='+cast(cast(dd.code as integer) as varchar) as url,dd.sequence as sequence,cast(dd.generic_name as nvarchar(max))+N'≡'+cast(dd.preparation_name as nvarchar(max))+N'≡'+cast(dd.generic_name_en as nvarchar(max))+N'≡'+isnull(cast(dd.namesynonym as nvarchar(max)),N'') as namesynonym,isnull(cast(dd.categorysynonym as nvarchar(max)),N'') as categorysynonym,isnull(cast(dd.therapeutic_class as nvarchar(max)),N'') as therapeutic_class,dd.treevalue as treevalue,dd.search_flag, CONVERT(varchar, created_date, 20) as created_date, dd.generic_name, dd.collective_name from T_JP_DrugData as dd where isnull(cast(dd.serious_adverse_event as nvarchar(max)),N'')&lt;&gt;N''
+ UNION 
+select 'drug' as type,dd.code_int,cast(dd.code as nvarchar(max)) as main_id,N'その他の副作用' as cfid,dd.general_name as title,N'【その他の副作用】' as subtitle,cast(dd.other_adverse_event as nvarchar(max)) as body,'drugDetails.aspx?code='+cast(cast(dd.code as integer) as varchar) as url,dd.sequence as sequence,cast(dd.generic_name as nvarchar(max))+N'≡'+cast(dd.preparation_name as nvarchar(max))+N'≡'+cast(dd.generic_name_en as nvarchar(max))+N'≡'+isnull(cast(dd.namesynonym as nvarchar(max)),N'') as namesynonym,isnull(cast(dd.categorysynonym as nvarchar(max)),N'') as categorysynonym,isnull(cast(dd.therapeutic_class as nvarchar(max)),N'') as therapeutic_class,dd.treevalue as treevalue,dd.search_flag, CONVERT(varchar, created_date, 20) as created_date, dd.generic_name, dd.collective_name from T_JP_DrugData as dd where isnull(cast(dd.other_adverse_event as nvarchar(max)),N'')&lt;&gt;N''
+ UNION 
+select 'drug' as type,dd.code_int,cast(dd.code as nvarchar(max)) as main_id,N'関連情報' as cfid,dd.general_name as title,N'【関連情報】' as subtitle,cast(isnull(dd.additional_text,N'') as nvarchar(max)) as body,'drugDetails.aspx?code='+cast(cast(dd.code as integer) as varchar) as url,dd.sequence as sequence,cast(dd.generic_name as nvarchar(max))+N'≡'+cast(dd.preparation_name as nvarchar(max))+N'≡'+cast(dd.generic_name_en as nvarchar(max))+N'≡'+isnull(cast(dd.namesynonym as nvarchar(max)),N'') as namesynonym,isnull(cast(dd.categorysynonym as nvarchar(max)),N'') as categorysynonym,isnull(cast(dd.therapeutic_class as nvarchar(max)),N'') as therapeutic_class,dd.treevalue as treevalue,dd.search_flag, CONVERT(varchar, created_date, 20) as created_date, dd.generic_name, dd.collective_name from T_JP_DrugData as dd where isnull(cast(dd.additional_text as nvarchar(max)),N'')&lt;&gt;N''
+) x 
+left outer join (select code_int, CAST(MAX(CAST(is_generic as INT)) AS BIT) as is_generic from T_JP_DrugDataJpc GROUP BY code_int) ddjpc ON X.code_int = ddjpc.code_int 
+where title not like N'%無効%' AND title not like N'%販売停止%'
+order by sequence desc
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="pkid"     name="id" />
+      <field column ="main_id"  name="mainid_s"              stripHTML="false" />
+      <field column ="cfid"     name="CFID_s"                stripHTML="false" />
+      <field column ="type"     name="type_s"                stripHTML="false" />
+      <field column ="title"    name="FTStitle_s"            stripHTML="true" />
+      <field column ="title"    name="FTStitle_ms"           stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji"     stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji2"    stripHTML="true" />
+      <field column ="title"    name="FTStitle_cjk"          stripHTML="true" />
+      <!-- field column ="title"    name="FTSdrug_kuromoji"      stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSdrug_kuromoji2"     stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSdrug_cjk"           stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSdrug_ms"            stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_kuromoji"       stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_kuromoji2"      stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_cjk"            stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_ms"             stripHTML="true" / -->
+      <field column ="subtitle" name="FTSsubtitle_s"         stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_ms"        stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji"  stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji2" stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_cjk"       stripHTML="true" />
+      <!-- field column ="subtitle" name="FTSdrug_kuromoji"      stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSdrug_kuromoji2"     stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSdrug_cjk"           stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSdrug_ms"            stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_kuromoji"       stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_kuromoji2"      stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_cjk"            stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_ms"             stripHTML="true" / -->
+      <field column ="body"     name="FTSbody_s"             stripHTML="true" />
+      <field column ="body"     name="FTSbody_ms"            stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji"      stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji2"     stripHTML="true" />
+      <field column ="body"     name="FTSbody_cjk"           stripHTML="true" />
+      <field column ="contents"   name="contents_s"       stripHTML="false" />
+      <!-- field column ="body"     name="FTSdrug_kuromoji"      stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSdrug_kuromoji2"     stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSdrug_cjk"           stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSdrug_ms"            stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_kuromoji"       stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_kuromoji2"      stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_cjk"            stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_ms"             stripHTML="true" / -->
+      <field column ="url"      name="FTSurl_s"              stripHTML="false" />
+      <field column ="group_s" name="group_s" />
+      <field column ="sequence" name="score_d"               stripHTML="false" />
+      <field column ="tb_image"      name="FTStb_image_s"   stripHTML="false" />
+      <field column ="image_url"     name="FTSimage_url_s"  stripHTML="false" />
+      <field column ="popup_type"    name="FTSpopup_type_s" stripHTML="false" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="category1"     name="FTScategory1_kuromoji"  stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_kuromoji2" stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_cjk"       stripHTML="true" />
+      <field column ="treevalue"     name="FTStreevalue_s"         stripHTML="false" />
+      <field column ="search_flag"   name="FTSsearch_flag_s"       stripHTML="false" />
+	  <field column ="created_date"   name="created_date_s"       stripHTML="false" />
+      <field column ="is_generic"   name="is_generic_s"       stripHTML="false" />
+      <field column ="is_generic"   name="is_generic_b"       stripHTML="false" />
+      <field column ="is_generic"   name="FTSis_generic_s"       stripHTML="true" />
+      <field column ="generic_name"   name="generic_name_s"       stripHTML="true" />
+      <field column ="generic_name"   name="FTSgeneric_name_s"       stripHTML="true" />
+      <field column ="generic_name"   name="FTSgeneric_name_ms"       stripHTML="true" />
+      <field column ="generic_name"    name="FTSgeneric_name_kuromoji"     stripHTML="true" />
+      <field column ="generic_name"    name="FTSgeneric_name_kuromoji2"     stripHTML="true" />
+      <field column ="generic_name"    name="FTSgeneric_name_cjk"          stripHTML="true" />
+      <field column ="general_name"   name="general_name_s"       stripHTML="false" />
+      <field column ="general_name"   name="FTSgeneral_name_s"       stripHTML="false" />
+      <field column ="collective_name"   name="collective_name_s"       stripHTML="false" />
+      <field column ="collective_name"   name="FTScollective_name_s"       stripHTML="true" />
+    </entity>
+    <entity name="fulltextsearchLab" threads="1" dataSource="JPOC_DS1" pk="pkid" query="
+select 'LAB_'+cast(x.main_id as nvarchar(max))+'_'+x.cfid+'_'+cast(row_number() over(order by x.type,x.main_id,x.cfid) as nvarchar(max)) as pkid,x.type,'LAB_'+cast(x.main_id as nvarchar(max)) as main_id,x.cfid,x.title,x.subtitle,x.body,x.url,0.7 as sequence,x.main_id+x.cfid as group_s,N'' as tb_image,N'' as image_url,N'' as popup_type,x.synonyms as synonym1,N'' as synonym2,N'' as category1,N'' as treevalue,cast(1 as bit) as search_flag from ( 
+select 'labtest' as type,right('000000'+cast(lt.srl_id as nvarchar(max)),7) as main_id,N'臨床意義' as cfid,lt.name as title,N'【臨床意義】' as subtitle,cast(lt.clinical_meaning as nvarchar(max)) as body,'labtestDetails.aspx?code='+right('000000'+cast(lt.srl_id as nvarchar(max)),7) as url, cast(lt.synonyms as nvarchar(max)) as synonyms from T_JP_LabTest as lt
+ UNION 
+select 'labtest' as type,cast(lt5.srl_id as nvarchar(max)) as main_id,isnull(cast(lt5.reduced_disease as nvarchar(max)),N'_') as cfid,cast(lt5.name as nvarchar(max)) as title,N'【'+cast(lt5.reduced_disease as nvarchar(max))+N'】' as subtitle,cast(lt5.disease_name as nvarchar(max)) as body,'labtestDetails.aspx?code='+cast(lt5.srl_id as varchar) as url, NULL as synonyms from T_JP_LabTestTable5 as lt5 
+where lt5.reduced_disease is not null and lt5.disease_name is not null and cast(lt5.reduced_disease as nvarchar(max))&lt;&gt;N'' and cast(lt5.disease_name as nvarchar(max))&lt;&gt;N''
+ UNION
+select 'labtest' as type,right('000000'+cast(lt2.srl_id as nvarchar(max)),7) as main_id,N'基準値' as cfid,cast(lt2.receipt_name as nvarchar(max)) as title,N'【基準値】' as subtitle,
+cast(lt2.reference_value as nvarchar(max)) as body,'labtestDetails.aspx?code='+right('000000'+cast(lt2.srl_id as nvarchar(max)),7) as url, NULL as synonyms 
+from T_JP_LabTestTable2 as lt2
+where lt2.reference_value is not null and lt2.receipt_name is not null and cast(lt2.reference_value as nvarchar(max))&lt;&gt;N'' and cast(lt2.receipt_name as nvarchar(max))&lt;&gt;N''
+) x 
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="pkid"     name="id" />
+      <field column ="main_id"  name="mainid_s"              stripHTML="false" />
+      <field column ="cfid"     name="CFID_s"                stripHTML="false" />
+      <field column ="type"     name="type_s"                stripHTML="false" />
+      <field column ="title"    name="FTStitle_s"            stripHTML="true" />
+      <field column ="title"    name="FTStitle_ms"           stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji"     stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji2"    stripHTML="true" />
+      <field column ="title"    name="FTStitle_cjk"          stripHTML="true" />
+      <!-- field column ="title"    name="FTSlab_kuromoji"       stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSlab_kuromoji2"      stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSlab_cjk"            stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSlab_ms"             stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_kuromoji"       stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_kuromoji2"      stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_cjk"            stripHTML="true" / -->
+      <!-- field column ="title"    name="FTSall_ms"             stripHTML="true" / -->
+      <field column ="subtitle" name="FTSsubtitle_s"         stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_ms"        stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji"  stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji2" stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_cjk"       stripHTML="true" />
+      <!-- field column ="subtitle" name="FTSlab_kuromoji"       stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSlab_kuromoji2"      stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSlab_cjk"            stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSlab_ms"             stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_kuromoji"       stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_kuromoji2"      stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_cjk"            stripHTML="true" / -->
+      <!-- field column ="subtitle" name="FTSall_ms"             stripHTML="true" / -->
+      <field column ="body"     name="FTSbody_s"             stripHTML="true" />
+      <field column ="body"     name="FTSbody_ms"            stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji"      stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji2"     stripHTML="true" />
+      <field column ="body"     name="FTSbody_cjk"           stripHTML="true" />
+      <!-- field column ="body"     name="FTSlab_kuromoji"       stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSlab_kuromoji2"      stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSlab_cjk"            stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSlab_ms"             stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_kuromoji"       stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_kuromoji2"      stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_cjk"            stripHTML="true" / -->
+      <!-- field column ="body"     name="FTSall_ms"             stripHTML="true" / -->
+      <field column ="url"      name="FTSurl_s"              stripHTML="false" />
+      <field column ="group_s" name="group_s" />
+      <field column ="sequence" name="score_d"              stripHTML="false" />
+      <field column ="tb_image"      name="FTStb_image_s"   stripHTML="false" />
+      <field column ="image_url"     name="FTSimage_url_s"  stripHTML="false" />
+      <field column ="popup_type"    name="FTSpopup_type_s" stripHTML="false" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="category1"     name="FTScategory1_kuromoji"  stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_kuromoji2" stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_cjk"       stripHTML="true" />
+      <field column ="treevalue"     name="FTStreevalue_s"         stripHTML="false" />
+      <field column ="search_flag"   name="FTSsearch_flag_s"       stripHTML="false" />
+    </entity>
+    <entity name="fulltextsearchMcalc" threads="1" dataSource="JPOC_DS1" pk="pkid" query="
+select 'MCL_'+cast(x.main_id as nvarchar(max))+'_'+isnull(x.cfid,'x')+'_'+cast(row_number() over(order by x.type,x.main_id,x.cfid) as nvarchar(max)) as pkid,x.type,'MCL_'+cast(x.main_id as nvarchar(max)) as main_id,x.cfid,x.title,x.subtitle,x.body,x.url,isnull(sequence,1) as sequence,x.main_id+isnull(x.cfid,'x') as group_s,isnull(tb_image,'') as tb_image,N'' as image_url,N'' as popup_type,N'' as synonym1,N'' as synonym2,N'' as category1,N'' as treevalue,cast(1 as bit) as search_flag
+ from ( 
+select 'mcalc' as type,cast(id as nvarchar(max)) as main_id,'' as cfid,title as title,'' as subtitle,'' as body,url as url,'1' as sequence,'' as tb_image from T_JP_MedicalCalculator
+) x
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="pkid"     name="id" />
+      <field column ="main_id"  name="mainid_s"              stripHTML="false" />
+      <field column ="cfid"     name="CFID_s"                stripHTML="false" />
+      <field column ="type"     name="type_s"                stripHTML="false" />
+      <field column ="title"    name="FTStitle_s"            stripHTML="true" />
+      <field column ="title"    name="FTStitle_ms"           stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji"     stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji2"    stripHTML="true" />
+      <field column ="title"    name="FTStitle_cjk"          stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_s"         stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_ms"        stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji"  stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji2" stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_cjk"       stripHTML="true" />
+      <field column ="body"     name="FTSbody_s"             stripHTML="true" />
+      <field column ="body"     name="FTSbody_ms"            stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji"      stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji2"     stripHTML="true" />
+      <field column ="body"     name="FTSbody_cjk"           stripHTML="true" />
+      <field column ="url"      name="FTSurl_s"              stripHTML="false" />
+      <field column ="group_s" name="group_s" />
+      <field column ="sequence" name="score_d"              stripHTML="false" />
+      <field column ="tb_image"      name="FTStb_image_s"   stripHTML="false" />
+      <field column ="image_url"     name="FTSimage_url_s"  stripHTML="false" />
+      <field column ="popup_type"    name="FTSpopup_type_s" stripHTML="false" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="category1"     name="FTScategory1_kuromoji"  stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_kuromoji2" stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_cjk"       stripHTML="true" />
+      <field column ="treevalue"     name="FTStreevalue_s"         stripHTML="false" />
+      <field column ="search_flag"   name="FTSsearch_flag_s"       stripHTML="false" />
+    </entity>
+    <entity name="fulltextsearchHoken" threads="1" dataSource="JPOC_DS1" pk="pkid" query="
+select 'HOK_'+cast(x.main_id as nvarchar(max))+'_'+isnull(x.cfid,'x')+'_'+cast(row_number() over(order by x.type,x.main_id,x.cfid) as nvarchar(max)) as pkid,x.type,'HOK_'+cast(x.main_id as nvarchar(max)) as main_id,x.cfid,x.title,x.subtitle,x.body,N'Shinryou.aspx?File='+x.url as url,cast(isnull(sequence,1) as integer)*0.7 as sequence,x.main_id+isnull(x.cfid,'x') as group_s,isnull(tb_image,'') as tb_image,N'' as image_url,N'' as popup_type,N'' as synonym1,N'' as synonym2,N'' as category1,N'' as treevalue,cast(1 as bit) as search_flag, contents
+ from ( 
+select 'hoken' as type,cast(id as nvarchar(max)) as main_id,N'hoken_'+isnull(cast(id as nvarchar(max)),'') as cfid,section as title,subsection as subtitle,body as body,isnull(cast(dir_path as nvarchar(max)),'')+'/'+isnull(cast(file_name as nvarchar(max)),'') as url,'1' as sequence,'' as tb_image, contents from T_JP_Shirobon where (body is not null or body&lt;&gt;'') and dir_path != 'shisetsu'
+ UNION
+select 'hoken' as type,cast(id as nvarchar(max)) as main_id,N'hoken_'+isnull(cast(id as nvarchar(max)),'') as cfid,section+' '+subsection as title,'' as subtitle,body as body,isnull(cast(dir_path as nvarchar(max)),'')+'/'+isnull(cast(file_name as nvarchar(max)),'') as url,'1' as sequence,'' as tb_image, contents from T_JP_Shirobon where (body is not null or body&lt;&gt;'') and dir_path = 'shisetsu'
+) x
+" transformer="RegexTransformer,DateFormatTransformer,HTMLStripTransformer"> 
+      <field column ="pkid"     name="id" />
+      <field column ="main_id"  name="mainid_s"              stripHTML="false" />
+      <field column ="cfid"     name="CFID_s"                stripHTML="false" />
+      <field column ="type"     name="type_s"                stripHTML="false" />
+      <field column ="title"    name="FTStitle_s"            stripHTML="true" />
+      <field column ="title"    name="FTStitle_ms"           stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji"     stripHTML="true" />
+      <field column ="title"    name="FTStitle_kuromoji2"    stripHTML="true" />
+      <field column ="title"    name="FTStitle_cjk"          stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_s"         stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_ms"        stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji"  stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_kuromoji2" stripHTML="true" />
+      <field column ="subtitle" name="FTSsubtitle_cjk"       stripHTML="true" />
+      <field column ="body"     name="FTSbody_s"             stripHTML="true" />
+      <field column ="body"     name="FTSbody_ms"            stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji"      stripHTML="true" />
+      <field column ="body"     name="FTSbody_kuromoji2"     stripHTML="true" />
+      <field column ="body"     name="FTSbody_cjk"           stripHTML="true" />
+      <field column ="contents"   name="contents_s"       stripHTML="false" />
+      <field column ="url"      name="FTSurl_s"              stripHTML="false" />
+      <field column ="group_s" name="group_s" />
+      <field column ="sequence" name="score_d"              stripHTML="false" />
+      <field column ="tb_image"      name="FTStb_image_s"   stripHTML="false" />
+      <field column ="image_url"     name="FTSimage_url_s"  stripHTML="false" />
+      <field column ="popup_type"    name="FTSpopup_type_s" stripHTML="false" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym1"      name="FTSsynonym1_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji"   stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_kuromoji2"  stripHTML="false" splitBy="≡" />
+      <field column ="synonym2"      name="FTSsynonym2_cjk"        stripHTML="false" splitBy="≡" />
+      <field column ="category1"     name="FTScategory1_kuromoji"  stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_kuromoji2" stripHTML="true" />
+      <field column ="category1"     name="FTScategory1_cjk"       stripHTML="true" />
+      <field column ="treevalue"     name="FTStreevalue_s"         stripHTML="false" />
+      <field column ="search_flag"   name="FTSsearch_flag_s"       stripHTML="false" />
+      <field column ="contents"   name="contents_s"       stripHTML="false" />
+    </entity>
+  </document>
+</dataConfig>
