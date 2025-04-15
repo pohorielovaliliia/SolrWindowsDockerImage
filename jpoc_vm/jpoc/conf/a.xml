@@ -1,5 +1,5 @@
 ﻿<dataConfig>
-  <dataSource type="JdbcDataSource" name="JPOC_DS1" driver="com.microsoft.sqlserver.jdbc.SQLServerDriver" url="jdbc:sqlserver://sqlserver-jpoc;databaseName=JPOC_IT"
+  <dataSource type="JdbcDataSource" name="JPOC_DS1" driver="com.microsoft.sqlserver.jdbc.SQLServerDriver" url="jdbc:sqlserver://sqlserver-jpoc;databaseName=JPOC_VM"
      user="sa" password="PaSSw0rd" readOnly="true"/>
 
 	<!--<dataSource type="JdbcDataSource" name="JPOC_DS1" driver="com.microsoft.sqlserver.jdbc.SQLServerDriver" url="jdbc:sqlserver://localhost;databaseName=JPOC_VM"
